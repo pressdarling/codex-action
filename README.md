@@ -88,12 +88,15 @@ jobs:
             });
 ```
 
+For a ChatGPT subscription auth variant, see `examples/code-review-subscription.yml`.
+
 ## Inputs
 
 | Name                     | Description                                                                                                                                    | Default     |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | `openai-api-key`         | Secret used to start the Responses API proxy when you are using OpenAI (default). Store it in `secrets`.                                       | `""`        |
 | `responses-api-endpoint` | Optional Responses API endpoint override, e.g. `https://example.openai.azure.com/openai/v1/responses`. Leave empty to use the proxy's default. | `""`        |
+| `codex-auth-json-b64`    | Base64-encoded contents of `auth.json` for Codex CLI (ChatGPT subscription auth). The action decodes and writes it to `CODEX_HOME/auth.json`.  | `""`        |
 | `prompt`                 | Inline prompt text. Provide this or `prompt-file`.                                                                                             | `""`        |
 | `prompt-file`            | Path (relative to the repository root) of a file that contains the prompt. Provide this or `prompt`.                                           | `""`        |
 | `output-file`            | File where the final Codex message is written. Leave empty to skip writing a file.                                                             | `""`        |
@@ -168,6 +171,39 @@ Ultimately, your configured Action might look something like the following:
     responses-api-endpoint: "https://bolinfest-7804-resource.cognitiveservices.azure.com/openai/v1/responses"
     prompt: "Debug all the things."
 ```
+
+### Using ChatGPT subscription auth
+
+If you already have a Codex login on a developer machine, you can export your CLI credentials and provide them to this action via a base64-encoded `auth.json`:
+
+1. On a trusted machine where `codex` is logged in, find `auth.json` under `~/.codex/auth.json`.
+2. Base64-encode it and save into a GitHub secret:
+
+   Linux/macOS:
+
+   ```bash
+   base64 -w0 ~/.codex/auth.json
+   ```
+
+   macOS (BSD base64):
+
+   ```bash
+   base64 -i ~/.codex/auth.json | tr -d '\n'
+   ```
+
+3. In your workflow, pass the secret to the action:
+
+```yaml
+- uses: openai/codex-action@v1
+  with:
+    codex-auth-json-b64: ${{ secrets.CODEX_AUTH_JSON_B64 }}
+    prompt: |
+      Hello from subscription auth.
+```
+
+Notes:
+- Do not provide both `openai-api-key` and `codex-auth-json-b64` unless you specifically want to use the Responses API proxy; if both are present, the proxy configuration takes precedence.
+- `auth.json` is sensitive. This action writes it with file mode `0600`. Prefer `safety-strategy: drop-sudo` or `unprivileged-user` to limit risk.
 
 ## Version History
 
