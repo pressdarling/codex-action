@@ -1,0 +1,13 @@
+version: "1"
+rules:
+  # 1) Keep upstream-main in your fork identical to upstream/main
+  - base: upstream-main
+    upstream: openai:codex-action
+    mergeMethod: hardreset        # overwrite upstream-main with upstream
+    mergeUnstable: true
+
+  # 2) Keep your main up to date by merging from upstream-main
+  - base: main
+    upstream: upstream-main
+    mergeMethod: merge            # regular git merge, keeps your changes
+    mergeUnstable: false
